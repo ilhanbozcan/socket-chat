@@ -5,30 +5,63 @@
         <title>Socket.io Demo</title>
 
         <style>
+            
+            html, body {height: 90%; background-color:#5D6D7E ;}
+           
+            .input { border: 0; padding: 10px}
+            .button { background: #F4D03F; border: none; padding: 10px}
+            #messages { list-style-type: none; margin: 0; padding: 0; }
+            #messages li { padding: 5px 10px; }
+            #messages li:nth-child(odd) { background: #eee; }
             .chat-form { display: none; }
+            .username-form{position: absolute;top: 45%;left: 45%;}
+            .side-bar{height: 50%; width: 10%; float: right; background-color: cornsilk; }
+            .rooms_container{margin-top: 20%;}
+            
+            
         </style>
+
     </head>
     <body>
+        
+            <form method="post" action="" class="username-form">
+                <input type="text" class='input' />
+                <input type="submit" value="Login" name="sub_login" class='button'>
+            </form>
 
-        <form class="username-form" method="post" action="">
-            <input type="text" />
-            <input type="submit" value="Login" name="sub_login">
-        </form>
+            <div class="side-bar">
+                <div class="rooms_container">
+                    <h3>Rooms</h3>
+                    <ul>
+                        
+                        <li><a href="\#" onclick="select_room(this)">Room1</a></li>
+                        <li><a href="\#" onclick="select_room(this)">Room2</a></li>
+                
+                    </ul>
+                </div>
+                <div class="users_container">
+                    <h3>Users</h3>
+                    <ul id="users_list" class="users_list"></ul>
+                </div>
+            </div>
 
+
+
+            
         <form class="chat-form" method="post">
-            <div style="float:right">
+            <div >
                 Hey there, <strong id="username">Guest</strong>
                 <label>Message: </label><br />
-                <textarea id="message"></textarea>
-                <input type="submit" value="Send" id="send_chat" name="send_chat">
-
-                <ul id="messages">
-                </ul>
-
+                <input id="message"></textarea>
+                <button type="submit" value="Send" id="send_chat" name="send_chat">Send </button>
             </div>
+
+            <ul id="messages">
+            </ul>
+
             <!--            <label>To:</label> <input id="recipient" /><br />-->
 
-            <ul id="users_list"></ul>
+            
         </form>
 
         <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
@@ -36,8 +69,10 @@
 <!--        <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>-->
         <script>
             var socket = io();
+            
 
-            console.log('sessionStorage : ', sessionStorage.selected_user);
+            console.log('sessionStorage11 : ', sessionStorage.selected_user);
+            console.log('sessionStorage11 : ', sessionStorage.selected_room);
             // Add a username
             $(".username-form").on("submit", function () {
 
@@ -59,8 +94,9 @@
                             }
                             console.log('username ' + user_data.users[i].username);
                         } else {
-                            alert('user disconnected!');
+                           
                             sessionStorage.selected_user = '';
+                            sessionStorage.selected_room = '';
                         }
                     }
                     //$('#users_list').append($('<li>').text(users));
@@ -73,34 +109,49 @@
             chat_form.on("submit", function () {
                 // Retrieve
                 var receiver = sessionStorage.selected_user;
+                var room = sessionStorage.selected_room;
                 console.log('receiver sessionStorage ', receiver);
 
                 //Check If user selected to send chat
                 if (receiver) {
                     // Send the message to the server
+                    console.log('receiver in');
                     socket.emit("private-message", {
                         "username": receiver,
-                        "content": $(this).find("textarea").val(),
+                        "content": $(this).find("input").val(),
                         "sender": $('#username').text()
                     });
-                } else {
+                }
+                else if(room){
+                    console.log(sessionStorage.selected_room);
+                    socket.emit("room-message",{
+                        "username": room,
+                        "content": $(this).find("input").val(),
+                        "sender": $('#username').text()
+
+                    });
+                }
+                
+                
+                else {
                     socket.emit("broadcast-message", {
                         "username": "broadcast",
-                        "content": $(this).find("textarea").val(),
+                        "content": $(this).find("input").val(),
                         "sender": $('#username').text()
                     });
 
                 }
                 // Empty the form
-                $(this).find("input:first, textarea").val('');
+                $(this).find("input:first, input").val('');
                 return false;
             });
 
             // Whenever we receieve a message, append it to the <ul>
             socket.on("add-message", function (data) {
                 console.log('add-message', data);
-                $("#messages").append($("<li>", {"text": data.sender + ': ' + data.content}));
-                //$("#messages").append('<li>' + data.sender + ': ' + data.content + '</li>');
+                //$("#messages").append("<li><strong>You</strong>: " + data.content);
+                //$("#messages").append($("<li>", {"text": data.sender + ': ' + data.content}));
+                $("#messages").append('<li>' + data.sender + ': ' + data.content + '</li>');
             });
 
             socket.on('own_message', function (own_data) {
@@ -114,6 +165,24 @@
                 if (typeof (Storage) !== "undefined") {
                     // Code for localStorage/sessionStorage.
                     sessionStorage.selected_user = ele.innerHTML;
+                    sessionStorage.selected_room = '';
+                } else {
+                    console.log('Sorry! No Web Storage support..');
+                }
+
+            }
+
+            function select_room(ele) {
+                //console.log(ele.innerHTML);
+                // Store sessionStorage
+                console.log('roomm clicked');
+                if (typeof (Storage) !== "undefined") {
+                    // Code for localStorage/sessionStorage.
+                    sessionStorage.selected_room = ele.innerHTML;
+                    sessionStorage.selected_user = '';
+                    
+                  
+                   
                 } else {
                     console.log('Sorry! No Web Storage support..');
                 }

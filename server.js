@@ -9,6 +9,7 @@ app.listen(port, function () {
 
 var clients = [];
 
+
 function handler(req, res) {
     fs.readFile(__dirname + '/index.html',
             function (err, data) {
@@ -22,11 +23,13 @@ function handler(req, res) {
             });
 }
 
+
+
 io.sockets.on('connection', function (socket) {
 
     socket.on('add-user', function (data) {
         clients.push({'username': data.username, 'socid': socket.id});
-        console.log('clients : ', clients);
+        console.log('asdasd : ', clients);
         //clients.splice(clients.indexOf(socket.username), 1);
 
         update_users();
@@ -43,10 +46,10 @@ io.sockets.on('connection', function (socket) {
                 io.sockets.connected[clients[i].socid].emit("add-message", data);
                 break;
             }
-//            else {
-//                console.log("User does not exist: " + data.username);
-//            }
+//            
         }
+
+        console.log('ID :' +socket.id);
         io.sockets.connected[socket.id].emit("own_message", data);
 //        if (clients.username == data.username) {
 //            console.log(clients.username.socket);
@@ -58,24 +61,20 @@ io.sockets.on('connection', function (socket) {
     socket.on('broadcast-message', function (data) {
         console.log("Sending: " + data.content + " to broadcast");
         //var uni = data.username;
-        
         io.emit("add-message", data);
-            //socket.emit('get_users', {username: rows[i].username, soc_id: rows[i].soc_id});
-            
-//            else {
-//                console.log("User does not exist: " + data.username);
-//            }
-        
-       
-//        if (clients.username == data.username) {
-//            console.log(clients.username.socket);
-//            io.sockets.connected[clients.socket].emit("add-message", data);
-//        } else {
-//            console.log("User does not exist: " + data.username);
-//        }
+     
     });
 
-
+    socket.on('room-message', function (data) {
+        socket.join(data.username);
+        console.log("Sending room : " + data.content + " to " + data.username);
+        io.sockets.in(data.username).emit('add-message', data);
+        //io.sockets.connected[rooms[i].socid].emit("add-message", data);
+         
+//            
+       
+     
+    });
 
 
 
