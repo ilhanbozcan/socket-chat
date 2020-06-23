@@ -1,62 +1,56 @@
 const app = require('express')();
 const server = require('http').Server(app);
 const io = require('socket.io')(server);
-const db = require('./db');
-const collection = 'users';
-//var fs = require('fs');
-//var port = process.env.PORT || 3000;
+const bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({extended: false}));
+let mongoose = require('mongoose');
 
-db.connect((err)=>{
-    console.log('in');
+
+const path = require('path');
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+app.set('view options', {
+    layout: false
+});
+
+
+
+
+const port = process.env.port || 3000;
+const indexRouter = require('./routes/indexRouter');
+
+app.use('/', indexRouter);
+
+
+
+
+
+app.listen(port,err=>{
     if(err){
-        console.log('unable to connect to database');
-        process.exit(1);
+        return console.log('ERROR',err);
     }
-    else{
-        app.listen(3000,()=>{
-            console.log('Connected');
-        })
-    }
+    console.log(`Listening on port ${port}`);
 })
 
-app.post('/login', (req, res) => {
-    res.redirect('/index')
-});
-
- app.post('/register', (req, res) => {
-    res.redirect('/login')
- });
 
 
 
- app.get('/login', (req, res) => {
-    res.sendFile(__dirname + '/login/login.html');
-});
-
-app.get('/index', (req, res) => {
-    res.sendFile(__dirname + '/index.html');
-});
-
-app.get('/register', (req, res) => {
-    res.sendFile(__dirname + '/register/register.html');
- });
-
-
- function register(username,pass){
-    clients.push({'username':username,'password':pass});
- }
-
-
-
-
+/*
 var clients = [];
 
 
+io.sockets.on('connection',socketController.respond);
+
+io.sockets.on('news', function(data){
+    console.log(data.msg);
+    console.log('in');
+});
 
 
 
 io.sockets.on('connection', function (socket) {
-    
+    console.log('Connecttion socket');
 
     socket.on('add-user', function (data) {
         clients.push({'username': data.username, 'socid': socket.id});
@@ -67,20 +61,20 @@ io.sockets.on('connection', function (socket) {
     });
 
     socket.on('private-message', function (data) {
-        console.log("Sending: " + data.content + " to " + data.receiver);
+        console.log("Sending: " + data.content + " to " + data.username);
         //var uni = data.username;
         for (var i in clients) {
             console.log('socid: ' + clients[i].socid);
             console.log('uname: ' + clients[i].username);
             //socket.emit('get_users', {username: rows[i].username, soc_id: rows[i].soc_id});
-            if (data.receiver == clients[i].username) {
+            if (data.username == clients[i].username) {
                 io.sockets.connected[clients[i].socid].emit("add-message", data);
                 break;
             }
 //            
         }
 
-        //console.log('ID :' +socket.id);
+        console.log('ID :' +socket.id);
         io.sockets.connected[socket.id].emit("own_message", data);
 //        if (clients.username == data.username) {
 //            console.log(clients.username.socket);
@@ -96,20 +90,18 @@ io.sockets.on('connection', function (socket) {
      
     });
 
-    socket.on('join-room', function(room){
-        socket.join(room);
-    });
-
     socket.on('room-message', function (data) {
-        //socket.join(data.receiver);
-        console.log("Sending room : " + data.content + " to " + data.receiver);
-        io.sockets.in(data.receiver).emit('add-message', data);
+        socket.join(data.username);
+        console.log("Sending room : " + data.content + " to " + data.username);
+        io.sockets.in(data.username).emit('add-message', data);
         //io.sockets.connected[rooms[i].socid].emit("add-message", data);
          
 //            
        
      
     });
+
+
 
     //Removing the socket on disconnect
     socket.on('disconnect', function () {
@@ -128,4 +120,8 @@ io.sockets.on('connection', function (socket) {
 
 });
 
-
+module.exports = function(io) {
+    io.on('connection', function(socket) {
+    });
+};
+*/
