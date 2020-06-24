@@ -5,12 +5,6 @@ const userController = require('../controllers/userController.js');
 
 
 
-router.use(function(req,res,next) {
-    console.log('Middleware in');
-    next();
-    
-});
-
 router
 .route('/')
 .get(userController.indexPageGet);

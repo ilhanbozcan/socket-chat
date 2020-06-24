@@ -1,5 +1,3 @@
-
-
 <!doctype html>
 <html lang="en">
     <head>
@@ -44,12 +42,12 @@
 
 
 
-        <form class="chat-form" method="post">
+        <form class="chat-form" method="POST" >
             <div >
                 Hey there, <strong id="username">Guest</strong>
                 <label>Message: </label><br />
                 <input id="message"></textarea>
-                <button onclick="sendMessage()" value="Send" id="send_chat" name="send_chat">Send </button>
+                <button type="submit" value="Send" id="send_chat" name="send_chat">Send </button>
             </div>
 
             <ul id="messages">
@@ -61,85 +59,41 @@
         </form>
 
         <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.dev.js"></script>
+
         
         <script>
-            var socket = io();
             
 
-            console.log('sessionStorage11 : ', sessionStorage.selected_user);
-            console.log('sessionStorage11 : ', sessionStorage.selected_room);
-            // Add a username
+            const socket = io('http://localhost:8000');
+            console.log(socket);
+            console.log('rendered');
+            var username;
+            var socketID;
 
-            socket.on('get-user', function (data) {
-                console.log('in');
+            socket.on('user-info',function(data){
+                console.log('on in');
                 $("#username").text(data.username);
-            });
+                console.log(data.username);
+                username = data.username;
+                socketID = data.socID;
+                console.log(data.socID)
+            })
 
 
 
-            function sendMessage(){
-                var chat_form = $(".chat-form");
-                chat_form.on("submit", function () {
-                // Retrieve
-                var receiver = sessionStorage.selected_user;
-                var room = sessionStorage.selected_room;
-                console.log('receiver sessionStorage ', receiver);
 
-                //Check If user selected to send chat
-                if (receiver) {
-                    // Send the message to the server
-                    console.log('receiver in');
-                    socket.emit("private-message", {
-                        "username": receiver,
-                        "content": $(this).find("input").val(),
-                        "sender": $('#username').text()
-                    });
-                }
-                else if(room){
-                    console.log(sessionStorage.selected_room);
-                    socket.emit("room-message",{
-                        "username": room,
-                        "content": $(this).find("input").val(),
-                        "sender": $('#username').text()
-
-                    });
-                }
-                
-                
-                else {
-                    socket.emit("broadcast-message", {
-                        "username": "broadcast",
-                        "content": $(this).find("input").val(),
-                        "sender": $('#username').text()
-                    });
-
-                }
-                // Empty the form
-                $(this).find("input:first, input").val('');
-                return false;
-            });
-
-            }
-            
-
-
-            $(".username-form").on("submit", function () {
-
-                // Tell the server about it
-               
-
-                // Remove this form and show the chat fo
-                socket.on('users_list', function (user_data) {
+            socket.on('users_list', function (user_data) {
                     console.log('users_list user_data: ', user_data.users);
                     $("#users_list").empty();
                     for (var i in user_data.users) {
-                        if (user_data.users[i] != null) {
+                        if (user_data.users[i].socketID != null) {
                             if (username != user_data.users[i].username) {
                                 $('#users_list').append('<li><a href=\"#\" onclick="select_user(this)">' + user_data.users[i].username + '</a></li>');
                             }
                             console.log('username ' + user_data.users[i].username);
-                        } else {
+                        } 
+                        else {
                            
                             sessionStorage.selected_user = '';
                             sessionStorage.selected_room = '';
@@ -147,8 +101,65 @@
                     }
                     //$('#users_list').append($('<li>').text(users));
                 });
-                return false;
+
+
+
+
+
+            console.log('sessionStorage11 : ', sessionStorage.selected_user);
+            console.log('sessionStorage11 : ', sessionStorage.selected_room);
+            
+            
+         
+           
+            var chat_form = $(".chat-form");
+
+            chat_form.on("submit", function () {
+            // Retrieve
+            var receiver = sessionStorage.selected_user;
+            var room = sessionStorage.selected_room;
+            console.log('receiver sessionStorage ', receiver);
+
+            //Check If user selected to send chat
+            if (receiver) {
+                // Send the message to the server
+                console.log('receiver in');
+                socket.emit("private-message", {
+                    "username": receiver,
+                    "content": $(this).find("input").val(),
+                    "sender": $('#username').text()
+                });
+            }
+            else if(room){
+                console.log(sessionStorage.selected_room);
+                socket.emit("room-message",{
+                    "username": room,
+                    "content": $(this).find("input").val(),
+                    "sender": $('#username').text()
+
+                });
+            }
+            
+            
+            else {
+                console.log('Broadcast in')
+                socket.emit("broadcast-message", {
+                    "username": "broadcast",
+                    "content": $(this).find("input").val(),
+                    "sender": $('#username').text()
+                });
+
+            }
+            // Empty the form
+            $(this).find("input:first, input").val('');
+            return false;
             });
+
+            
+            
+
+            
+
 
             // Chat form
            
@@ -156,15 +167,13 @@
             // Whenever we receieve a message, append it to the <ul>
             socket.on("add-message", function (data) {
                 console.log('add-message', data);
-                //$("#messages").append("<li><strong>You</strong>: " + data.content);
-                //$("#messages").append($("<li>", {"text": data.sender + ': ' + data.content}));
+                
                 $("#messages").append('<li>' + data.sender + ': ' + data.content + '</li>');
             });
 
-            socket.on('own_message', function (own_data) {
-                console.log('own_data con: ', own_data.content);
-                $("#messages").append("<li><strong>You</strong>: " + own_data.content);
-            });
+            
+
+            
 
             function select_user(ele) {
                 //console.log(ele.innerHTML);
@@ -195,6 +204,8 @@
                 }
 
             }
+
+            
         </script>
     </body>
 </html>

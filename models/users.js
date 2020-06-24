@@ -10,7 +10,11 @@ let usersSchema = mongoose.Schema({
     password:{
         type: String,
         required: true
+    },
+    socketID:{
+        type: String
     }
+
 
 });
 

@@ -1,12 +1,16 @@
-const app = require('express')();
+var express = require('express');
+const app = express();
 const server = require('http').Server(app);
-const io = require('socket.io')(server);
+
 const bodyParser = require('body-parser');
 app.use(bodyParser.urlencoded({extended: false}));
-let mongoose = require('mongoose');
+const mongoose = require('mongoose');
+mongoose.connect('mongodb://localhost/chatDB');
 
+const users = require('./models/users.js');
 
 const path = require('path');
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -14,15 +18,12 @@ app.set('view options', {
     layout: false
 });
 
-
-
-
 const port = process.env.port || 3000;
 const indexRouter = require('./routes/indexRouter');
 
+app.use(express.static(path.join(__dirname, 'views')));
+
 app.use('/', indexRouter);
-
-
 
 
 
@@ -32,6 +33,23 @@ app.listen(port,err=>{
     }
     console.log(`Listening on port ${port}`);
 })
+
+
+// When rerun server set socket ıds null
+console.log(users.find());
+users.find(({ "socketID": { "$ne": null } }), function (err, existUser) {
+    existUser.forEach(user => {
+        user.socketID = null;
+        user.save();
+    });
+});
+
+
+
+
+
+
+
 
 
 
@@ -114,10 +132,7 @@ io.sockets.on('connection', function (socket) {
         update_users();
     })
 
-    function update_users() {
-        io.emit('users_list', {users: clients});
-    }
-
+   
 });
 
 module.exports = function(io) {
